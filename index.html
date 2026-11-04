@@ -27,6 +27,8 @@ const ITEM_SIZE = 36;                     // size of the falling emoji (pixels)
 const BASKET_SIZE = 48;                   // size of the basket (pixels). Any overlap with it counts as a catch
 const FALL_SPEED = 160;                   // how fast items fall (pixels per second)
 const SPAWN_EVERY = 0.7;                  // seconds between new items
+const FAST_CHANCE = 0.2;                  // chance (0 to 1) that an item is a fast one
+const FAST_MULTIPLIER = 2.5;              // how many times faster a fast item falls
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -46,10 +48,11 @@ function reset() {
 function spawn() {
   const bad = Math.random() < 0.25;
   const pool = bad ? AVOID : CATCH;
+  const fast = Math.random() < FAST_CHANCE;
   items.push({
     x: 30 + Math.random() * (canvas.width - 60),
     y: -30,
-    speed: FALL_SPEED + Math.random() * 100 + score * 2,
+    speed: (FALL_SPEED + Math.random() * 100 + score * 2) * (fast ? FAST_MULTIPLIER : 1),
     emoji: pool[Math.floor(Math.random() * pool.length)],
     bad,
   });

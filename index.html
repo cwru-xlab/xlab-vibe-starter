@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Emoji Catcher</title>
+<style>
+  body { margin: 0; background: #1b1b2f; color: #fff; font-family: system-ui, sans-serif; text-align: center; }
+  h1 { margin: 12px 0 4px; }
+  #hud { font-size: 20px; margin-bottom: 8px; }
+  canvas { background: #162447; border-radius: 12px; max-width: 95vw; touch-action: none; }
+</style>
+</head>
+<body>
+<h1>Emoji Catcher</h1>
+<div id="hud">Score: <span id="score">0</span> &nbsp; Lives: <span id="lives"></span></div>
+<canvas id="game" width="480" height="640"></canvas>
+<p>Move with the mouse, finger, or arrow keys. Click or press Space to restart.</p>
+
+<script>
+// ---- Easy things to change ----
+const CATCH = ["🍎", "🍕", "⭐", "🍩"];   // emoji you want to catch
+const AVOID = ["💣", "🪨"];               // emoji that cost a life
+const BASKET = "🧺";
+const START_LIVES = 3;
+const ITEM_SIZE = 36;                     // size of the falling emoji (pixels)
+const BASKET_SIZE = 48;                   // size of the basket (pixels). Any overlap with it counts as a catch
+const FALL_SPEED = 160;                   // how fast items fall (pixels per second)
+const SPAWN_EVERY = 0.7;                  // seconds between new items
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const basketY = canvas.height - 30;
+const keys = {};
+let basketX, items, score, lives, over, timer, lastTime;
+
+function reset() {
+  basketX = canvas.width / 2;
+  items = [];
+  score = 0;
+  lives = START_LIVES;
+  over = false;
+  timer = 0;
+}
+
+function spawn() {
+  const bad = Math.random() < 0.25;
+  const pool = bad ? AVOID : CATCH;
+  items.push({
+    x: 30 + Math.random() * (canvas.width - 60),
+    y: -30,
+    speed: FALL_SPEED + Math.random() * 100 + score * 2,
+    emoji: pool[Math.floor(Math.random() * pool.length)],
+    bad,
+  });
+}
+
+function update(dt) {
+  if (over) return;
+  if (keys.ArrowLeft) basketX -= 400 * dt;
+  if (keys.ArrowRight) basketX += 400 * dt;
+  basketX = Math.max(30, Math.min(canvas.width - 30, basketX));
+
+  timer += dt;
+  if (timer > SPAWN_EVERY) { spawn(); timer = 0; }
+
+  for (const it of items) {
+    it.y += it.speed * dt;
+    const reach = (ITEM_SIZE + BASKET_SIZE) / 2;   // boxes overlap when centers are closer than this
+    if (Math.abs(it.x - basketX) < reach && Math.abs(it.y - basketY) < reach) {
+      it.done = true;
+      if (it.bad) lives--; else score++;
+    } else if (it.y > canvas.height + 30) {
+      it.done = true;
+      if (!it.bad) lives--;
+    }
+  }
+  items = items.filter(it => !it.done);
+  if (lives <= 0) over = true;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = ITEM_SIZE + "px serif";
+  for (const it of items) ctx.fillText(it.emoji, it.x, it.y);
+  ctx.font = BASKET_SIZE + "px serif";
+  ctx.fillText(BASKET, basketX, basketY);
+  document.getElementById("score").textContent = score;
+  document.getElementById("lives").textContent = "❤️".repeat(Math.max(lives, 0));
+  if (over) {
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#fff";
+    ctx.font = "40px system-ui";
+    ctx.fillText("Game over — " + score, canvas.width / 2, canvas.height / 2);
+  }
+}
+
+function loop(now) {
+  const dt = Math.min((now - lastTime) / 1000, 0.05);   // seconds since last frame
+  lastTime = now;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function moveTo(clientX) {
+  const r = canvas.getBoundingClientRect();
+  basketX = Math.max(30, Math.min(canvas.width - 30, (clientX - r.left) * (canvas.width / r.width)));
+}
+canvas.addEventListener("pointermove", e => moveTo(e.clientX));
+canvas.addEventListener("pointerdown", e => { moveTo(e.clientX); if (over) reset(); });
+addEventListener("keydown", e => {
+  keys[e.key] = true;
+  if (e.key === " " && over) reset();
+  if (e.key.startsWith("Arrow")) e.preventDefault();
+});
+addEventListener("keyup", e => { keys[e.key] = false; });
+
+reset();
+requestAnimationFrame(t => { lastTime = t; loop(t); });
+</script>
+</body>
+</html>

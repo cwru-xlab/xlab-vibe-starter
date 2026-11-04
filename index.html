@@ -29,11 +29,18 @@ const FALL_SPEED = 160;                   // how fast items fall (pixels per sec
 const SPAWN_EVERY = 0.7;                  // seconds between new items
 const FAST_CHANCE = 0.2;                  // chance (0 to 1) that an item is a fast one
 const FAST_MULTIPLIER = 2.5;              // how many times faster a fast item falls
+const STAR_COUNT = 40;                    // number of twinkling stars in the background
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const basketY = canvas.height - 30;
 const keys = {};
+const stars = Array.from({ length: STAR_COUNT }, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  size: 1 + Math.random() * 2,
+  phase: Math.random() * Math.PI * 2,
+}));
 let basketX, items, score, lives, over, timer, lastTime;
 
 function reset() {
@@ -84,6 +91,12 @@ function update(dt) {
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#fff";
+  for (const s of stars) {
+    ctx.globalAlpha = 0.65 + 0.35 * Math.sin(lastTime / 1000 * 2 + s.phase);   // twinkle
+    ctx.fillRect(s.x, s.y, s.size, s.size);
+  }
+  ctx.globalAlpha = 1;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = ITEM_SIZE + "px serif";

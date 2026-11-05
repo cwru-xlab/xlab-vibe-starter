@@ -27,8 +27,12 @@ const ITEM_SIZE = 36;                     // size of the falling emoji (pixels)
 const BASKET_SIZE = 48;                   // size of the basket (pixels). Any overlap with it counts as a catch
 const FALL_SPEED = 160;                   // how fast items fall (pixels per second)
 const SPAWN_EVERY = 0.7;                  // seconds between new items
+const BLANKET_COLOR = "214, 40, 40";      // picnic blanket stripe color (red, green, blue)
+const BLANKET_SQUARE = 40;                // width of each blanket stripe (pixels)
 
 const canvas = document.getElementById("game");
+const stripe = `rgba(${BLANKET_COLOR}, 0.45) 0 ${BLANKET_SQUARE}px, transparent ${BLANKET_SQUARE}px ${BLANKET_SQUARE * 2}px`;
+canvas.style.background = `repeating-linear-gradient(0deg, ${stripe}), repeating-linear-gradient(90deg, ${stripe}), #fff`;
 const ctx = canvas.getContext("2d");
 const basketY = canvas.height - 30;
 const keys = {};
